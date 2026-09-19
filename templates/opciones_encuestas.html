@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EncuestaCLARO - Responder Encuesta</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #ffffff;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Encabezado */
+        header {
+            border-bottom: 2px solid #333;
+            padding: 12px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 35px;
+            height: 35px;
+            background-color: #2b6cb0;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .brand-title {
+            font-size: 1.6rem;
+            color: #2b6cb0;
+            font-weight: bold;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-nav {
+            padding: 8px 20px;
+            border: 1px solid #333;
+            border-radius: 6px;
+            background-color: #ffffff;
+            color: #333;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .btn-nav:hover {
+            background-color: #e2e8f0;
+        }
+
+        /* Usuario Logueado */
+        .user-logged-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border: 2px solid #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .btn-logout {
+            background: none;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 2px 10px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            text-decoration: none;
+            color: #333;
+        }
+
+        /* Contenido Principal */
+        main {
+            max-width: 1000px;
+            width: 90%;
+            margin: 30px auto;
+            flex: 1;
+        }
+
+        .header-card {
+            border: 1px solid #718096;
+            border-radius: 6px;
+            padding: 10px 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .header-card .icon {
+            font-size: 1.8rem;
+        }
+
+        .header-card h2 {
+            font-size: 1.4rem;
+            color: #1a202c;
+        }
+
+        .header-card span {
+            font-size: 1rem;
+            color: #4a5568;
+            font-weight: normal;
+            margin-left: 10px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 15px;
+        }
+
+        /* Lista de Encuestas */
+        .surveys-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .survey-item {
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 12px 18px;
+            font-size: 1rem;
+            color: #2d3748;
+            background-color: #ffffff;
+            text-decoration: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+
+        .survey-item:hover {
+            background-color: #f7fafc;
+        }
+
+        .survey-title-text {
+            font-weight: 500;
+        }
+
+        .survey-action-badge {
+            font-size: 0.85rem;
+            color: #2b6cb0;
+            font-weight: 600;
+        }
+
+        .no-surveys {
+            color: #718096;
+            font-style: italic;
+            padding: 10px 0;
+        }
+
+        /* Pie de página */
+        footer {
+            border-top: 1px solid #333;
+            padding: 18px 30px;
+            background-color: #ffffff;
+            color: #2d3748;
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header con control de sesión -->
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">✓</div>
+            <span class="brand-title">EncuestaCLARO</span>
+        </div>
+
+        <nav class="nav-buttons">
+            <a href="{{ url_for('inicio') }}" class="btn-nav">Inicio</a>
+            <a href="{{ url_for('encuestas') }}" class="btn-nav">Encuestas</a>
+            <a href="{{ url_for('reportes') }}" class="btn-nav">Reportes</a>
+        </nav>
+
+        {% if session.get('usuario') %}
+        <div class="user-logged-box">
+            <div class="user-avatar">👤</div>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Cerrar Sesión</a>
+        </div>
+        {% else %}
+        <div></div>
+        {% endif %}
+    </header>
+
+    <!-- Contenido Principal -->
+    <main>
+        <div class="header-card">
+            <span class="icon">📱</span>
+            <h2>Responder encuesta</h2>
+            <span>Accede y responde encuestas</span>
+        </div>
+
+        <h3 class="section-title">Encuestas disponibles:</h3>
+
+        <div class="surveys-list">
+            {% if encuestas %}
+                {% for encuesta in encuestas %}
+                <a href="{{ url_for('responder_encuesta', encuesta_id=encuesta.id) }}" class="survey-item">
+                    <span class="survey-title-text">{{ encuesta.titulo }}</span>
+                    <span class="survey-action-badge">Responder &rarr;</span>
+                </a>
+                {% endfor %}
+            {% else %}
+                <p class="no-surveys">No hay encuestas disponibles en este momento. ¡Crea una nueva desde el panel!</p>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 EncuestaCLARO | Proyecto SENA | JYGAT SAS</p>
+    </footer>
+
+</body>
+</html>
