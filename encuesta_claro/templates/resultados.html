@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% block title %}Análisis · {{ encuesta.titulo }}{% endblock %}
+
+{% block content %}
+<main class="page analytics-page">
+  <div class="container">
+
+    <div class="title-row analytics-title">
+      <div>
+        <span class="eyebrow">Analítica avanzada</span>
+        <h1>{{ encuesta.titulo }}</h1>
+        <p class="muted">Resumen visual, distribución de respuestas, participación y tendencias.</p>
+      </div>
+      <div class="inline-actions">
+        <button class="btn btn-outline" type="button" onclick="window.print()">🖨 Imprimir / PDF</button>
+        <a class="btn btn-secondary" href="{{ url_for('reportes') }}">← Reportes</a>
+      </div>
+    </div>
+
+    <section class="analytics-kpis">
+      <article class="analytics-kpi">
+        <span class="kpi-icon">👥</span>
+        <div><strong>{{ total_respuestas }}</strong><span>Envíos recibidos</span></div>
+      </article>
+      <article class="analytics-kpi">
+        <span class="kpi-icon">📋</span>
+        <div><strong>{{ total_preguntas }}</strong><span>Preguntas</span></div>
+      </article>
+      <article class="analytics-kpi">
+        <span class="kpi-icon">✓</span>
+        <div><strong>{{ promedio_completitud }}%</strong><span>Participación media</span></div>
+      </article>
+      <article class="analytics-kpi">
+        <span class="kpi-icon">💬</span>
+        <div><strong>{{ total_respuestas_individuales }}</strong><span>Respuestas analizadas</span></div>
+      </article>
+    </section>
+
+    {% if total_respuestas == 0 %}
+      <section class="empty analytics-empty">
+        <div class="empty-icon">📊</div>
+        <h2>Aún no hay resultados</h2>
+        <p>Cuando alguien responda esta encuesta, aquí aparecerán las gráficas y el análisis.</p>
+      </section>
+    {% else %}
+
+      <section class="analytics-panel">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">Comparación</span>
+            <h2>Participación por pregunta</h2>
+            <p class="muted">Porcentaje de envíos que contienen una respuesta para cada pregunta.</p>
+          </div>
+        </div>
+        <div class="chart-box chart-medium">
+          <canvas id="completionChart"></canvas>
+        </div>
+      </section>
+
+      {% if daily_labels %}
+      <section class="analytics-panel">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">Tendencia</span>
+            <h2>Respuestas recibidas por día</h2>
+            <p class="muted">Permite identificar cuándo se concentra la participación.</p>
+          </div>
+        </div>
+        <div class="chart-box chart-medium">
+          <canvas id="dailyChart"></canvas>
+        </div>
+      </section>
+      {% endif %}
+
+      <div class="analysis-grid">
+      {% for item in preguntas_resumen %}
+        <section class="analytics-panel question-analysis">
+          <div class="panel-head">
+            <div>
+              <span class="question-number">Pregunta {{ loop.index }}</span>
+              <h2>{{ item.pregunta.texto_pregunta }}</h2>
+              <p class="muted">{{ item.total }} respuesta(s) · {{ item.completion }}% de participación</p>
+            </div>
+            {% if item.is_choice %}
+              <span class="analysis-badge">Selección</span>
+            {% else %}
+              <span class="analysis-badge open">Abierta</span>
+            {% endif %}
+          </div>
+
+          {% if item.is_choice and item.counts %}
+            <div class="question-chart">
+              <canvas id="questionChart{{ loop.index }}"></canvas>
+            </div>
+            <div class="distribution-list">
+              {% for answer, count in item.counts %}
+                {% set pct = (count * 100 / item.total) if item.total else 0 %}
+                <div class="distribution-row">
+                  <div class="distribution-label" title="{{ answer }}">{{ answer }}</div>
+                  <div class="distribution-track"><span style="width:{{ pct }}%"></span></div>
+                  <strong>{{ count }}</strong>
+                  <small>{{ "%.1f"|format(pct) }}%</small>
+                </div>
+              {% endfor %}
+            </div>
+          {% elif item.open_words %}
+            <div class="open-analysis">
+              <div class="open-analysis-copy">
+                <strong>Temas más frecuentes</strong>
+                <p class="muted">Palabras que aparecen con mayor frecuencia en las respuestas. No sustituyen una lectura cualitativa de los comentarios.</p>
+              </div>
+              <div class="word-list">
+                {% for word in item.open_words %}
+                  <span class="word-chip"><strong>{{ word.word }}</strong> {{ word.count }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          {% else %}
+            <div class="empty small-empty">No hay respuestas suficientes para generar un análisis.</div>
+          {% endif %}
+        </section>
+      {% endfor %}
+      </div>
+
+      <section class="analytics-panel">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">Detalle</span>
+            <h2>Todas las respuestas</h2>
+            <p class="muted">Consulta las respuestas originales y su fecha de envío.</p>
+          </div>
+        </div>
+        {% if resultados %}
+          <div class="table-wrap">
+            <table class="table analytics-table">
+              <thead>
+                <tr><th>Pregunta</th><th>Respuesta</th><th>Fecha</th></tr>
+              </thead>
+              <tbody>
+              {% for fila in resultados %}
+                <tr>
+                  <td>{{ fila.texto_pregunta }}</td>
+                  <td>{{ fila.texto_respuesta }}</td>
+                  <td>{{ fila.fecha.strftime('%d/%m/%Y %H:%M') if fila.fecha else '-' }}</td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </section>
+
+    {% endif %}
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const chartData = {{ chart_data|tojson }};
+const completionLabels = {{ question_labels|tojson }};
+const completionValues = {{ question_completion|tojson }};
+const dailyLabels = {{ daily_labels|tojson }};
+const dailyValues = {{ daily_values|tojson }};
+
+function makeQuestionChart(canvas, item) {
+  const isDoughnut = item.labels.length > 0 && item.labels.length <= 5;
+  const config = {
+    type: isDoughnut ? 'doughnut' : 'bar',
+    data: {
+      labels: item.labels,
+      datasets: [{
+        label: 'Respuestas',
+        data: item.values,
+        borderWidth: isDoughnut ? 0 : 1,
+        borderRadius: isDoughnut ? 0 : 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: isDoughnut, position: 'bottom' },
+        tooltip: { callbacks: {
+          label: (ctx) => ` ${ctx.raw} respuesta(s)`
+        }}
+      },
+      scales: isDoughnut ? {} : {
+        y: { beginAtZero: true, ticks: { precision: 0 } },
+        x: { ticks: { autoSkip: false } }
+      }
+    }
+  };
+  new Chart(canvas, config);
+}
+
+const completionCanvas = document.getElementById('completionChart');
+if (completionCanvas) {
+  new Chart(completionCanvas, {
+    type: 'bar',
+    data: {
+      labels: completionLabels,
+      datasets: [{
+        label: 'Participación',
+        data: completionValues,
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true, max: 100, ticks: { callback: value => value + '%' } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.raw}%` } }
+      }
+    }
+  });
+}
+
+const dailyCanvas = document.getElementById('dailyChart');
+if (dailyCanvas) {
+  new Chart(dailyCanvas, {
+    type: 'line',
+    data: {
+      labels: dailyLabels,
+      datasets: [{
+        label: 'Envíos',
+        data: dailyValues,
+        tension: .28,
+        fill: true,
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+      plugins: {
+        tooltip: { callbacks: { label: ctx => ` ${ctx.raw} envío(s)` } }
+      }
+    }
+  });
+}
+
+chartData.forEach((item, index) => {
+  const canvas = document.getElementById('questionChart' + (index + 1));
+  if (canvas && item.is_choice && item.labels.length) makeQuestionChart(canvas, item);
+});
+</script>
+{% endblock %}

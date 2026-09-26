@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="EncuestaCLARO, plataforma para crear, responder y analizar encuestas.">
+  <title>{% block title %}EncuestaCLARO{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+<header class="site-header"><div class="container nav">
+  <a class="brand" href="{{ url_for('inicio') }}"><span class="brand-mark">✓</span><span>EncuestaCLARO<small>Gestión inteligente de encuestas</small></span></a>
+  <nav class="nav-links">
+    <a href="{{ url_for('inicio') }}">Inicio</a>
+    <a href="{{ url_for('encuestas') }}">Encuestas</a>
+    <a href="{{ url_for('crear_encuesta') }}">Crear</a>
+    {% if session.get('id') %}<a href="{{ url_for('reportes') }}">Resultados</a>{% endif %}
+  </nav>
+  <div class="nav-actions">
+    {% if session.get('id') %}
+      <span class="user-pill"><span class="avatar">{{ session.get('usuario','U')[0]|upper }}</span><strong>{{ session.get('usuario') }}</strong></span>
+      <a class="btn btn-secondary" href="{{ url_for('logout') }}">Salir</a>
+    {% else %}
+      <a class="btn btn-secondary" href="{{ url_for('login') }}">Iniciar sesión</a>
+      <a class="btn btn-primary" href="{{ url_for('registro') }}">Crear cuenta</a>
+    {% endif %}
+  </div>
+</div></header>
+{% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="flash-stack">{% for category,message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}{% endwith %}
+{% block content %}{% endblock %}
+<footer class="footer"><div class="container footer-grid"><div><strong>EncuestaCLARO</strong><div>Plataforma de encuestas · Proyecto SENA</div></div><div>© {{ current_year }} · Todos los derechos reservados</div></div></footer>
+<script>setTimeout(()=>document.querySelectorAll('.flash').forEach(x=>{x.style.opacity='0';x.style.transform='translateY(-5px)';setTimeout(()=>x.remove(),250)}),4500);</script>
+</body></html>
